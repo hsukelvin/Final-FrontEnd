@@ -129,6 +129,7 @@ function updateCartQuantity(id,num){
         const shoppingData = response.data;
         //render購物車列表
         renderShoppingCartList(shoppingData);
+        swal("完成", "已更新購物車產品數量及總金額!", "success");
     })
     .catch(function (error) {
         const errorResp = error.response;
@@ -245,6 +246,34 @@ function createOrder(inputField){
     })
 }
 
+//加入購物車時先確認購物車內是否有重複商品，如果有則數量加1，沒有則加入購物車
+function checkCartId(id){
+    axios.get(`${url}/${folder.carts}`)
+    .then(function (response) {
+        const productId = id;
+        const shoppingData = response.data;
+        const newArry = [];
+        shoppingData.carts.forEach(item => newArry.push(item.product.id));
+        console.log(newArry.includes(productId));
+        if(newArry.includes(productId)){
+            let updateNum = 0;
+            let cartId = '';
+            shoppingData.carts.forEach(item => {
+                if(item.product.id === productId){
+                    cartId = item.id;
+                    updateNum = parseInt(item.quantity + 1)
+                }
+            }); 
+            updateCartQuantity(cartId,updateNum);
+        }else{
+            addShoppingCart(productId);
+        }
+    })
+    .catch(function (error) {
+        //console.log(error);
+    })
+}
+
 function addEventHandle(){
     productSelect,addEventListener('change',function(e){
         const selectValue = productSelect.value;
@@ -263,7 +292,7 @@ function addEventHandle(){
         if(e.target.nodeName !== 'A') return;
         e.preventDefault();
         //加入購物車
-        addShoppingCart(e.target.dataset.id);
+        checkCartId(e.target.dataset.id);
     })
 
     shoppingCartTable.addEventListener('click',function(e){
